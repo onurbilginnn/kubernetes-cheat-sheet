@@ -4,6 +4,8 @@
 ## Containerd
 - Container runtime
 
+# Main Components
+
 ## ETCD
 - kubeadm deploys etcd as a pod (pod: etcd-master, namespace: kube-system)
 - Distributed reliable key-value store
