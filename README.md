@@ -81,9 +81,9 @@
 
 ## General Commands and tags
 - kubectl <command_text> --help (lists all the options for the given command)
-- kubectl <command> -n=<namespace_name> (runs command for given namespace)
-- kubectl <command> -A (runs command on all namespaces)
-- kubectl <command> -o <output_options(wide, yaml, json...)>(runs command and outputs the result in given output options (wide: detailed output on terminal, others are file outputs))
-- kubectl <command> --dry-run=client (simulates command result not runs the command exactly)
+- kubectl <command_text> -n=<namespace_name> (runs command for given namespace)
+- kubectl <command_text> -A (runs command on all namespaces)
+- kubectl <command_text> -o <output_options(wide, yaml, json...)>(runs command and outputs the result in given output options (wide: detailed output on terminal, others are file outputs))
+- kubectl <command_text> --dry-run=client (simulates command result not runs the command exactly)
 - kubectl run <pod_name> --image=<image_name> --dry-run=client -o yaml > <file_name>.yaml (simulates pod creation and writes pod config file to yaml file)
 - kubectl replace -f <file_name>.yaml --force (replaces(delete & create) the current component by given file)
