@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: myapp-rc
+  labels:
+    app: webapp
+    type: frontend
+spec:
+   replicas: 3
+   selector:
+     matchLabels:
+       type: frontend
+   template:
+  #  Pod file section
+     metadata:
+       name: webapp-pod
+       labels:
+         app: webapp
+         type: frontend
+     spec:
+      containers:
+      - name: nginx-controller
+        image: nginx
+      - name: busybox
+        image: busybox
+  #  Pod file section

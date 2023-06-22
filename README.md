@@ -57,9 +57,31 @@
 ## Pod Commands
 - kubectl run <pod_name> --image <image_name> -n <namespace_name> (Runs a pod with provided image name in given namespace)
 - kubectl get pods (Lists all pods in default namespace)
+- kubectl get pods -o wide (Lists all pods with more details)
 - kubectl get pods (get pods in default namespace)
-- kubectl get pods  -A (get pods in all namespaces)
-- kubectl get pods -n=<namespace_name> (get pods in specific namespace)
-- kubectl create -f <pod_definition_file.yaml> (create pod by file manual way)
-- kubectl apply -f <pod_definition_file.yaml> (create pod by file automatic way)
+- kubectl create -f <pod_definition_file>.yaml (create pod by file manual way)
+- kubectl apply -f <pod_definition_file>.yaml (create pod by file automatic way)
 - kubectl describe pod <pod_name> (detailed information about pod)
+- kubectl delete pod <pod_name> (deletes pod)
+- kubectl edit pod <pod_name> (edits current pod not changes the yaml file edits the configs on RAM)
+- kubectl replace -f <pod_definition>.yaml --force
+
+## ReplicaSets (Old way - Replication Controller)
+- Helps creating multi pod replicas for high availability (Scaling)
+- Can span across multi nodes
+## ReplicaSets Commands
+- kubectl create -f <replicaset-definition>.yaml
+- kubectl get replicaset
+- kubectl scale --replicas=<new_replica_amount> -f <replicaset-definition>.yaml
+- kubectl scale --repliicas=<new_replica_amount> replicaset <replicaset_name>
+- kubectl delete replicaset <replicaset_name> (Also deletes underlying pods)
+- kubectl replace -f <replicaset_definition>.yaml --force
+
+## General Commands and tags
+- kubectl <command> --help (lists all the options for the given command)
+- kubectl <command> -n=<namespace_name> (runs command for given namespace)
+- kubectl <command> -A (runs command on all namespaces)
+- kubectl <command> -o <output_options(wide, yaml, json...)>(runs command and outputs the result in given output options (wide: detailed output on terminal, others are file outputs))
+- kubectl <command> --dry-run=client (simulates command result not runs the command exactly)
+- kubectl run <pod_name> --image=<image_name> --dry-run=client -o yaml > <file_name>.yaml (simulates pod creation and writes pod config file to yaml file)
+- kubectl replace -f <file_name>.yaml --force (replaces(delete & create) the current component by given file)

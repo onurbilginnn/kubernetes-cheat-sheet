@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: myapp-rc
+  labels:
+    app: webapp
+    type: frontend
+spec:
+   replicas: 3
+   template:
+  #  Pod file section
+     metadata:
+       name: webapp-pod
+       labels:
+         app: webapp
+         type: frontend
+     spec:
+      containers:
+      - name: nginx-controller
+        image: nginx
+      - name: busybox
+        image: busybox
+  #  Pod file section
