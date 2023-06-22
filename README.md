@@ -80,7 +80,7 @@
 - kubectl replace -f <replicaset_definition>.yaml --force
 
 ## General Commands and tags
-- kubectl <command> --help (lists all the options for the given command)
+- kubectl <command_text> --help (lists all the options for the given command)
 - kubectl <command> -n=<namespace_name> (runs command for given namespace)
 - kubectl <command> -A (runs command on all namespaces)
 - kubectl <command> -o <output_options(wide, yaml, json...)>(runs command and outputs the result in given output options (wide: detailed output on terminal, others are file outputs))
