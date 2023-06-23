@@ -58,6 +58,7 @@
 
 ## Pod Commands
 - kubectl run <pod_name> --image <image_name> -n <namespace_name> (Runs a pod with provided image name in given namespace)
+- kubectl run <pod_name> --image=<image_name> --dry-run=client -o yaml > <file_name>.yaml (simulates pod creation and writes pod config file to yaml file)
 - kubectl get pods (Lists all pods in default namespace)
 - kubectl get pods -o wide (Lists all pods with more details)
 - kubectl get pods (get pods in default namespace)
@@ -85,7 +86,10 @@
 - Deployment is one level up on replicaset in the hierarchy
 - Provides seamless upgrades using rolling updates, pause-resume changes
 ## Deployments Commands
-***** Same as replicasets, just write deployment instead of replicasete in the command *****
+***** Same as replicasets, just write deployment instead of replicaset in the command *****
+- kubectl create deployment --image=nginx nginx (Creates deployment)
+- kubectl create deployment --image=nginx nginx --dry-run=client -o yaml (Generate Deployment YAML file (-o yaml). Don't create it(--dry-run))
+- kubectl create deployment --image=nginx nginx --dry-run=client -o yaml > nginx-deployment.yaml (Generate Deployment YAML file (-o yaml). Don’t create it(–dry-run) and save it to a file.)
 
 ## General Commands and tags
 - kubectl <command_text> --help (lists all the options for the given command)
@@ -93,7 +97,6 @@
 - kubectl <command_text> -A (runs command on all namespaces)
 - kubectl <command_text> -o <output_options(wide, yaml, json...)>(runs command and outputs the result in given output options (wide: detailed output on terminal, others are file outputs))
 - kubectl <command_text> --dry-run=client (simulates command result not runs the command exactly)
-- kubectl run <pod_name> --image=<image_name> --dry-run=client -o yaml > <file_name>.yaml (simulates pod creation and writes pod config file to yaml file)
 - kubectl replace -f <file_name>.yaml --force (replaces(delete & create) the current component by given file)
 - kubectl api-resources (List all commands with short keys)
 - kubectl explain <component_type> (explains the definition file for given component type)
