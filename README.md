@@ -71,13 +71,21 @@
 ## ReplicaSets (Old way - Replication Controller)
 - Helps creating multi pod replicas for high availability (Scaling)
 - Can span across multi nodes
+- selector/matchlabels and template/labels should match
 ## ReplicaSets Commands
 - kubectl create -f <replicaset-definition>.yaml
 - kubectl get replicaset
 - kubectl scale --replicas=<new_replica_amount> -f <replicaset-definition>.yaml
-- kubectl scale --repliicas=<new_replica_amount> replicaset <replicaset_name>
+- kubectl scale --replicas=<new_replica_amount> replicaset <replicaset_name>
 - kubectl delete replicaset <replicaset_name> (Also deletes underlying pods)
 - kubectl replace -f <replicaset_definition>.yaml --force
+- kubectl describe rs <replicaset_name> (detailed information about rs)
+
+## Deployments
+- Deployment is one level up on replicaset in the hierarchy
+- Provides seamless upgrades using rolling updates, pause-resume changes
+## Deployments Commands
+***** Same as replicasets, just write deployment instead of replicasete in the command *****
 
 ## General Commands and tags
 - kubectl <command_text> --help (lists all the options for the given command)
@@ -87,3 +95,6 @@
 - kubectl <command_text> --dry-run=client (simulates command result not runs the command exactly)
 - kubectl run <pod_name> --image=<image_name> --dry-run=client -o yaml > <file_name>.yaml (simulates pod creation and writes pod config file to yaml file)
 - kubectl replace -f <file_name>.yaml --force (replaces(delete & create) the current component by given file)
+- kubectl api-resources (List all commands with short keys)
+- kubectl explain <component_type> (explains the definition file for given component type)
+- kubectl get all (Lists all components pods, replicasets, deployments ...)
