@@ -91,13 +91,46 @@
 - kubectl create deployment --image=nginx nginx --dry-run=client -o yaml (Generate Deployment YAML file (-o yaml). Don't create it(--dry-run))
 - kubectl create deployment --image=nginx nginx --dry-run=client -o yaml > nginx-deployment.yaml (Generate Deployment YAML file (-o yaml). Don’t create it(–dry-run) and save it to a file.)
 
+## Services
+- Enable connectivity between apps with other apps or users
+- Listens a port and forwards the request to other port
+- Uses random algorithm to balance the load between pods
+- Service is created span across all nodes with same NodePort
+### Types
+- NodePort service; listens a port on a node and forwards the request to pods
+- ClusterIP service; creates a virtual IP to enable communication between different services in the cluster (Ex; app -> db)
+- LoadBalancer service; a service for load balancers in cloud providers
+### Port Types
+- Port (Service port)
+- TargetPort (Forwarded port)
+- NodePort (External port)
+## Services Commands
+***** Same commands as get, describe, delete, create -f... ***** 
+- curl <ip:port>
+
+## Namespaces
+- Resource house
+- Have policies, quotas
+- in namespace = mysql.connect("db-service")
+- in other namespace = mysql.connect("db-service.dev.svc.cluster.local")
+- Automatically created DNS convention = service_name.namespace.resource_type.domain
+## Namespace Commands
+- kubectl get pods --namespace=<namespace_name> (Get pods in specified namespace)
+- kubectl create -f <pod_definition>.yaml --namespace=<namespace_name> (Creates pod in specified namespace)
+- kubectl create namespace dev (Create namespace)
+- kubectl config set-context $(kubectl config current-context) --namespace=dev (Changes default namespace to dev)
+
+## Imperative Commands
+## Declarative Commands
+
 ## General Commands and tags
+- kubectl <command_text> -o <output_options(wide, yaml, json...)>(runs command and outputs the result in given output options (wide: detailed output on terminal, others are file outputs))
 - kubectl <command_text> --help (lists all the options for the given command)
 - kubectl <command_text> -n=<namespace_name> (runs command for given namespace)
 - kubectl <command_text> -A (runs command on all namespaces)
-- kubectl <command_text> -o <output_options(wide, yaml, json...)>(runs command and outputs the result in given output options (wide: detailed output on terminal, others are file outputs))
 - kubectl <command_text> --dry-run=client (simulates command result not runs the command exactly)
 - kubectl replace -f <file_name>.yaml --force (replaces(delete & create) the current component by given file)
 - kubectl api-resources (List all commands with short keys)
 - kubectl explain <component_type> (explains the definition file for given component type)
 - kubectl get all (Lists all components pods, replicasets, deployments ...)
+- k get pods | wc -l (Counts lines on the output)

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp-service
+spec:
+  type: NodePort
+  ports:
+    - targetPort: 80 # Pod port
+      port: 80 # Service port required
+      nodePort: 30008 # Node external port if not provided automatically allocated between 30000 - 32767
+  selector:
+  # Pod labels
+    app: webapp
+    type: frontend
+  # Pod labels
