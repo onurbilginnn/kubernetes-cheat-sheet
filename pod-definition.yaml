@@ -5,7 +5,16 @@ metadata:
   labels:
     app: webapp
     type: frontend
+  namespace: dev
 spec:
+  nodeName: node01 # Scheduling only for creation time
+  nodeSelector: # Scheduling select node by label
+    size: Large # Scheduling node labels
+  tolerations: # Scheduling toleration
+    - key: "app"
+      operator: "Equal"
+      value: "blue"
+      effect: "NoSchedule"
   containers:
   - name: nginx-controller
     image: nginx

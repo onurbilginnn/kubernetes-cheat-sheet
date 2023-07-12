@@ -59,6 +59,8 @@
 ## Pod Commands
 - kubectl run <pod_name> --image <image_name> -n <namespace_name> (Runs a pod with provided image name in given namespace)
 - kubectl run <pod_name> --image=<image_name> --dry-run=client -o yaml > <file_name>.yaml (simulates pod creation and writes pod config file to yaml file)
+- kubectl run <pod_name> --image=<image_name> --port=<port_number> (Creates a pod exposed on specified port with the image provided)
+- kubectl run <pod_name> --image=<image_name> --port=<port_number> --expose (Creates a pod and a service with the same name exposed on specified port with the image provided)
 - kubectl get pods (Lists all pods in default namespace)
 - kubectl get pods -o wide (Lists all pods with more details)
 - kubectl get pods (get pods in default namespace)
@@ -117,12 +119,91 @@
 ## Namespace Commands
 - kubectl get pods --namespace=<namespace_name> (Get pods in specified namespace)
 - kubectl create -f <pod_definition>.yaml --namespace=<namespace_name> (Creates pod in specified namespace)
-- kubectl create namespace dev (Create namespace)
+- kubectl create namespace <namespace_name> (Create namespace)
 - kubectl config set-context $(kubectl config current-context) --namespace=dev (Changes default namespace to dev)
 
 ## Imperative Commands
+### Create Commands
+- kubectl run --image=nginx
+- kubectl create deploy --image=nginx nginx
+- kubectl expose <resource_type> nginx --port 80 (Exposes a resource(pod, deployment) by creating a service for it
+ by using it is labels as selectors on port 80)
+### Update Commands
+- kubectl edit deploy nginx
+- kubectl scale deploy nginx --replicas=5
+- kubectl set image deploy nginx nginx=nginx:1.18
+### CRD Commands
+- kubectl create -f nginx.yaml
+- kubectl replace -f nginx.yaml
+- kubectl replace -f nginx.yaml --force
+- kubectl delete -f nginx.yaml
 ## Declarative Commands
-
+- kubectl apply -f nginx.yaml
+- kubectl apply;
+1 - Creates the object if it does not exist, the yaml file that was used in creation 
+stored as json as last applied configuration
+2 - If the object exists, kubectl apply command compares the file with last applied configuration json and
+updates it, if something deleted from the new yaml, you can revert the changes.
+3 - Last applied configuration object stored under metadata - annotations - kubectl.kubernetes.io/last-applied-configuration
+## Scheduling
+### Taints and Tolerations
+- Scheduler limitations when placing pods in nodes, if the pod has toleration to the taint 
+defined on the node the pod could be placed in the node.
+- Taints => nodes, tolerations => pods
+- Taints and tolerations do not tell the pod to go to a particular node, taints tell the nodes to accept pods with
+certain tolerations.
+- If you want complex & detailed logic, it is being achieved by node affinity.
+### Taints and Tolerations Commands
+- kubectl taint nodes <node_name> <key>=<value:taint-effect> (Adds taint to node, 
+taint-effect types = NoSchedule, PreferNoSchedule, NoExecute)
+Ex: kubectl taint nodes node01 app=blue:NoSchedule
+- kubectl taint nodes <node_name> <key>=<value:taint-effect>- (Removes taint from the node)
+- kubectl describe node <node_name> | grep Taint
+### Node Selectors & Node Affinity
+- Node selectors selects nodes by label
+- For complex node selections use node affinity
+- A combination of taints/tolerations and node affinity will make node selection most accurate
+### Node Selectors & Node Affinity Commands
+- kubectl label nodes <node_name> <key>=<value>
+Ex: kubectl label nodes node01 size=large
+### Resource Requirements & Limits
+- By default node has no requests & limits on cpu or memory
+- if no requests defined but limits are defined, Kubernetes automatically define requests as limit thresholds.
+- if no limits defined but requests are defined, each pod guaranteed to have requested resources
+and unlimited resources if needed. (Best scenario)
+- Request set is really important that makes you sure you will have sufficient resources
+- If you define a limit in pod definition file on container prop, scheduler will throttle the cpu and 
+pod can not exceed cpu limit, if memory limit exceeds scheduler will terminate the pod with OOM(out of memory) alert.
+- You can create LimitRange object in namespace level that will set default limits and requests for all
+pod under same namespace.
+- You can create ResourceQuota object to limit all total pods not to exceed defined resource quota in the namespace.
+### Daemon Sets
+- Makes sure that one replica of the pod runs in all the nodes in the cluster.
+- For Ex; kube-proxy, weave-net etc
+### Daemon Sets Commands
+- kubectl get daemonsets
+- kubectl describe daemonsets <daemon_name>
+### Static Pods
+- If there is only worker node with kubelet and NO kube-apiserver, etcd, controller manager, kube-scheduler
+- kubelet managed pod independently is static pod.
+- /etc/kubernetes/manifests folder could include pod.yaml files and kubelet will use these files to create 
+static pods.
+- The folder can be configured under kubelet.service config file as --pod-manifest-path=/etc/kubernetes/manifests
+- You can provide another config file under kubelet.service file as --config=<file_name>.yaml
+(In the file use prop; staticPodPath: /etc/kubernetes/manifests)
+- /var/lib/kubelet/config.yaml is the default location for the kubelet config file.
+- You can see the static pods by running 'kubectl get pods'
+- You can not edit static pods, you can delete or modify them by using manifests folder files only
+- kubescheduler ignores static pods.
+### Static Pods Commands
+- docker ps
+- systemctl cat kubelet.service (see kubelet.service file)
+- kubectl get pod <pod_name> -o yaml (Get detailed info for the pod as yaml and if you check ownerReferences: you can
+find if the pod is static or not)
+### Multiple Schedulers
+- Custom scheduler runs as pod or deployment.
+- kube-scheduler.service - ExecStart=/usr/local/bin/kube-scheduler (--config=/etc/kubernetes/config/kube-scheduler.yaml)
+- Check documentation (scheduler docs)[https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/]
 ## General Commands and tags
 - kubectl <command_text> -o <output_options(wide, yaml, json...)>(runs command and outputs the result in given output options (wide: detailed output on terminal, others are file outputs))
 - kubectl <command_text> --help (lists all the options for the given command)
@@ -134,3 +215,4 @@
 - kubectl explain <component_type> (explains the definition file for given component type)
 - kubectl get all (Lists all components pods, replicasets, deployments ...)
 - k get pods | wc -l (Counts lines on the output)
+- kubectl get <resource_name> --selector env=dev,bu=finance --no-headers (selects resources with env=dev and bu=finance label)

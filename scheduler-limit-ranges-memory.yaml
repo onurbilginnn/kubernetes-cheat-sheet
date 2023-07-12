@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: LimitRange
+metadata: 
+  name: memmory-resource-constraint
+spec: 
+  limits:
+   - default:
+      mermory: 1Gi
+     defaultRequest:
+      mermory: 1Gi
+     max:
+      mermory: 1Gi
+     min:
+      mermory: 500Mi
+     type: Container
