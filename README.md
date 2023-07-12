@@ -203,7 +203,7 @@ find if the pod is static or not)
 ### Multiple Schedulers
 - Custom scheduler runs as pod or deployment.
 - kube-scheduler.service - ExecStart=/usr/local/bin/kube-scheduler (--config=/etc/kubernetes/config/kube-scheduler.yaml)
-- Check documentation (scheduler docs)[https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/]
+- Check documentation [scheduler docs](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/)
 ## General Commands and tags
 - kubectl <command_text> -o <output_options(wide, yaml, json...)>(runs command and outputs the result in given output options (wide: detailed output on terminal, others are file outputs))
 - kubectl <command_text> --help (lists all the options for the given command)
