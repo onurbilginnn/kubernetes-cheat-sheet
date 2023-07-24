@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webapp-pod
+  labels:
+    app: webapp
+    type: frontend
+  namespace: dev
+spec:
+  containers:
+  - name: nginx-controller
+    image: nginx
+    envFrom:
+      - configMapRef:
+          name: app-config
+  - name: busybox-controller
+    image: busybox
+    env:
+      - name: APP_COLOR
+        valueFrom:
+            configMapKeyRef:
+               name: app-config
+               key: APP_COLOR
+  volumes:
+    - name: app-configmap
+      configMap:
+        name: app-configmap
+ 

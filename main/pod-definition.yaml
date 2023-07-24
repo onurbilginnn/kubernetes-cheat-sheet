@@ -18,5 +18,12 @@ spec:
   containers:
   - name: nginx-controller
     image: nginx
+    command: ["sleep"]
+    args: ["1000"]
   - name: busybox
     image: busybox
+    env:
+      - name: ENVIRONMENT
+        value: dev
+    ports:
+      - containerPort: 8080

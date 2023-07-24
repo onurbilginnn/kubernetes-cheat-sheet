@@ -137,6 +137,7 @@
 - kubectl replace -f nginx.yaml
 - kubectl replace -f nginx.yaml --force
 - kubectl delete -f nginx.yaml
+
 ## Declarative Commands
 - kubectl apply -f nginx.yaml
 - kubectl apply;
@@ -145,6 +146,7 @@ stored as json as last applied configuration
 2 - If the object exists, kubectl apply command compares the file with last applied configuration json and
 updates it, if something deleted from the new yaml, you can revert the changes.
 3 - Last applied configuration object stored under metadata - annotations - kubectl.kubernetes.io/last-applied-configuration
+
 ## Scheduling
 ### Taints and Tolerations
 - Scheduler limitations when placing pods in nodes, if the pod has toleration to the taint 
@@ -204,6 +206,174 @@ find if the pod is static or not)
 - Custom scheduler runs as pod or deployment.
 - kube-scheduler.service - ExecStart=/usr/local/bin/kube-scheduler (--config=/etc/kubernetes/config/kube-scheduler.yaml)
 - Check documentation [scheduler docs](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/)
+### Multiple Schedulers Commands
+- kubectl get events -o wide (Shows all events by schedulers)
+- kubectl logs my-custom-scheduler -n=kube-system (Shows logs for the my-custom-scheduler pod or deployment)
+### Scheduler Profiles
+- Scheduler queues pods as below order
+    1 - Scheduling queue => Plugins - PrioritySort => Extensions - QueueSort
+    (Bind to priority classname that is defined by PriorityClass definition file)
+    2 - Filtering => Plugins - NodeResourcesFit, NodeName, NodeUnschedulable, TaintToleration, NodePorts, NodeAffinity => Extensions - preFilter, filter, postFilter
+    3 - Scoring => Plugins - NodeResourcesFit, ImageLocality, TaintToleration, NodeAffinity => Extensions - preScore, score, reserve, permit
+    4 - Binding => Plugins - DefaultBinder => Extensions - preBind, bind, postBind
+- On custom scheduler run condition, you can configure multi schedulers in one scheduler profile
+
+## Logging and Monitoring
+### Monitoring
+- Metrics Server for monitoring (Only in memory)
+- Kubelet has Cadvisor and that sends logs to metrics server
+## Logging and Monitoring Commands
+### Monitoring
+- minikube addons enable metrics-server
+  git clone https://github.com/kubernetes-incubator/metrics-server.git
+  kubectl create -f deploy/1.8+
+  kubectl top node (Shows resource comsumption by node)
+  kubectl top pod (Shows resource comsumption by pod)
+### Logging
+- kubectl logs -f <pod_name> (Single containered pod will show the logs, multi containered pod will fail)
+- kubectl logs -f <pod_name> <container_name> (Shows logs for the specified pod and container)
+- kubectl logs <pod_name> -c <container_name> (List logs for the container in a specific pod)
+
+## App Lifecycle Management
+### Rolling Updates and Rollbacks
+- There 2 types of deployment strategy; 
+Recreate (Destroys all pods at once and creates all at once - cons: App is down during recreation process)
+Rolling update (Kubernetes Default) (Replaces all pods one by one - cons: Update is seamless)
+### Rolling Updates and Rollbacks Commands
+- kubectl rollout status <deployment/deployment_name> (See the status of the rollout)
+- kubectl rollout history <deployment/deployment_name> (See the history of the rollout)
+- kubectl rollout undo <deployment/deployment_name> (Rollback the deployment upgrade)
+- kubectl set image <deployment/deployment_name> <image_name>=<image> (Updates as defined recreate or rolling)
+### Application Commands
+- Initial commands on containers to run when the container first runs
+- Kubernetes definition.yaml file always overwrites Docker entrypoint commands in the Dockerfile
+- kubectl run <pod_name> --image=<image_name> --command -- <command1> <command2> -- <arg1> <arg2>
+(Create pod with command and args)
+- kubectl run <pod_name> --image=<image_name> -- <arg1> <arg2> (Create pod with args)
+### ConfigMaps
+- File to add environment variables to pods
+### ConfigMaps Commands
+- kubectl create configmap app-config --from-literal=APP_COLOR=blue --from-literal=APP_MOD=prod
+- kubectl create configmap app-config --from-file=<file_name>.properties
+- kubectl get configmaps
+### Secrets
+- Secret env vars
+- Secrets are not encrypted. Only encoded
+- Secrets are not ecrypted in ETCD
+- Anyone able to create pods/deployments in the same namespace can access the secrets
+- After encryption at rest enabled existing secrets won't be encrypted only after creations will be encrypted
+### Secrets Commands
+- kubectl create secret generic <secret_name> --from-literal=<key>=<value>
+- kubectl create secret generic <secret_name> --from-file=<file_name>.properties
+- kubectl get secrets
+- echo -n <text> | base64 (Convert text to base64 encoded string)
+- echo -n <text> | base64 --decode (Decode base64 to string)
+### Multi-container Pods
+- 3 patterns; sidecar, adapter, ambassador
+### Initcontainers
+- A task that will be run only  one time when the pod is first created that is implemented by using initContainer.
+- When a POD is first created the initContainer is run, and the process in the initContainer must run to a completion before the real container hosting the application starts. 
+- You can configure multiple such initContainers as well, like how we did for multi-containers pod. In that case each init container is run one at a time in sequential order.
+
+## Cluster Maintenance
+### OS Updates
+- kube-controller-manager --pod-eviction-timeout=5m0s (Node unresponsive time after time passes node considered 
+as dead and all pods in the node will be moved to other nodes)
+- If the node comes back after --pod-eviction-timeout it will be empty
+### OS Updates Commands
+- kubectl drain <node_name> (The pods in the node terminated and started in an other node, node becomes unschedulable,
+if node comes online it is still unschedulable)
+- kubectl drain <node_name> --ignore-daemonsets (Ignores daemonset management to evict pods in the node)
+- kubectl uncordon <node_name> (Make unschedulable node schedulable)
+- kubectl cordon <node_name> (Make schedulable node unschedulable, no terminates)
+### Cluster Upgrade
+- Kubernetes components can have different versions.
+- kube-apiserver version = 1.10 (X)
+  controllor manager & kube-scheduler versions = 1.09 || 1.10 (X-1 to X)
+  kubelet & kube-proxy versions = 1.08 || 1.09 || 1.10 (X-2 to X)
+  kubectl 1.11 || 1.10 || 1.09 (X-1 to X+1)
+- Kubernetes supports only 3 versions at a time as download (For ex; 1.10 || 1.11 || 1.12)
+- First update master node then worker nodes
+- Worker node upgrade strategies;
+  1 - All at a time (Has downtime)
+  2 - One by one
+  3 - By adding new nodes to the cluster one by one
+- Upgrade kubeadm & kubelet on nodes one by one after draining the node (First master node)
+### Cluster Upgrade Commands
+- GCP updates the cluster with one click
+- kubeadm upgrade plan (Shows versions and details about the upgrade )
+  kubeadm upgrade apply (Upgrades the cluster)
+- apt-get upgrade -y kubeadm=1.12.0-00(Upgrades kubeadm tool)
+- apt-get upgrade -y kubelet=1.12.0-00 (Upgrades kubelet)
+- kubeadm upgrade node config --kubelet-version v1.12.0
+- systemctl restart kubelet (Restarts kubelet to perform upgrades)
+- systemctl daemon-reload (Restarts daemon)
+### Backup & Restore
+- etcd.service --data-dir=/var/lib/etcd (Shows the etcd resources save location)
+### Backup & Restore Commands
+- kubectl get all -A -o yaml > kubernetes-api-resources.yaml (Saves all resources to the file)
+#### Restoring ETCD
+- In manifests/etcd.yaml check volume and path file locations
+#### Restoring ETCD Commands
+- vi /etc/systemd/system/etcd.service (etcd service edit)
+- run 'etcdctl' commands on controlplane
+- ETCDCTL_API=3 etcdctl snapshot save snapshot.db
+- ETCDCTL_API=3 etcdctl snapshot status snapshot.db
+- service kube-apiserver stop
+- ETCDCTL_API=3 etcdctl snapshot restore snapshot.db \
+--data-dir /var/lib/<file_name>
+- systemctl daemon-reload
+- service etcd restart
+- service kube-apiserver start
+**** For all etcd commands add certificates to the commands****
+   --endpoints=https://127.0.0.1:2379
+   --cacert=/etc/etcd/ca.crt
+   --cert=/etc/etcd/etcd-server.crt
+   --key=/etc/etcd/etcd-server.key  
+
+## Security
+### Primitives
+- kube-apiserver is the center of any operation, (first line of defence)
+- Who can access kube-apiserver and what can they do?
+- By default all pods can access all other pods within the cluster, we can use network policies to configure it.
+### Auhentication
+- Two types of accounts; User(Admin, developer) - Service Accounts(Bots)
+- All user requests managed by kube-apiserver
+- kube-apiserver autenticates the user then process the requests
+#### kube-apiserver authentication ways
+- Static password file
+kube-apiserver.service section => --basic-auth-file=<password_file>.csv
+- Static token file
+kube-apiserver.service section => --token-auth-file=<token_file>.csv
+- Certificates
+- Identity Services
+#### Auth  User
+- curl -v -k https://master-node-ip:6443/api/v1/pods -u "user1:password123"
+- curl -v -k https://master-node-ip:6443/api/v1/pods -header "Authorization: Bearer <token>"
+### TLS Certs
+- 2 encryption types symmetric(one key) & asymmetric(private key & public key(lock))
+- Local key location ~/.ssh/authorized_keys
+- Public Keys => server.crt, server.pem, client.crt, client.pem
+- Private Keys => server.key,  server-key.pem, client.key, client-key.pem
+- If you encrypt your data with one of the keys only the other key can decrypt your data, you can not decrypt your data with the same key.
+- Encrypt your data with public key only, if you encrypt with private key anyone with the public key can decrypt you data.
+- Three types of certs 
+  1 - Root Certs (Authority Certs)
+  2 - Server Certs
+  3 - Client Certs
+### TLS Certs Commands
+- ssh-keygen (Creates private & public keys)
+- ssh -i id_rsa user1@server1 (Login success with key)
+- ssh-rsa <key> <user> (For ex. ssh-rsa AAAB32SDFAwer234adfavxcgasg67DSGSDvbvbdg user1)
+- openssl genrsa -out <private_key_file_name>.key 1024 (Creates private key)
+- openssl rsa -in <private_key_file_name>.key -pubout > <public_key_file_name>.pem (Creates public key)
+- openssl req -new -key my-bank.key -out my-bank.csr -subj "/C=US/ST=CA/O=MyOrg, Inc./CN=my-bank.com" (Creates a certificate request sign)
+### Kubernetes TLS Certs 
+- kube-apiserver, etcd-server, kubelet-server, kube-scheduler, admin user, kube-controller-manager, kube-proxy have keys(public, private) because all of them are communicating
+- kube-scheduler, admin user, kube-controller-manager, kube-proxy, kubelet-server send requests to kube-apiserver
+- kube-apiserver sends requests to kubelet-server & etcd-server
+- Servers that send requests have CLIENT CERTS, servers that get requests have SERVER CERTS
+
 ## General Commands and tags
 - kubectl <command_text> -o <output_options(wide, yaml, json...)>(runs command and outputs the result in given output options (wide: detailed output on terminal, others are file outputs))
 - kubectl <command_text> --help (lists all the options for the given command)
@@ -216,3 +386,11 @@ find if the pod is static or not)
 - kubectl get all (Lists all components pods, replicasets, deployments ...)
 - k get pods | wc -l (Counts lines on the output)
 - kubectl get <resource_name> --selector env=dev,bu=finance --no-headers (selects resources with env=dev and bu=finance label)
+- kubectl create -f . (Creates all files within the folder)
+- kubectl exec -n <namespace_name> -it <pod_name> -- cat <file_name>  (Checks the file in the pod in given namespace, exec command runs commands in given pod)
+- alias k=kubectl (shortcut k defined in terminal to call kubectl)
+- cat /etc/*release* (Find current OS)
+- export ETCDCTL_API=3 (Configures ETCDCTL_API to 3)
+- kubectl config <arg> (kubernetes config command to see, update, add contexts, clusters...)
+- ps -ef | grep etcd (Check service configurations)
+
