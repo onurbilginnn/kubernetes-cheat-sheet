@@ -373,6 +373,143 @@ kube-apiserver.service section => --token-auth-file=<token_file>.csv
 - kube-scheduler, admin user, kube-controller-manager, kube-proxy, kubelet-server send requests to kube-apiserver
 - kube-apiserver sends requests to kubelet-server & etcd-server
 - Servers that send requests have CLIENT CERTS, servers that get requests have SERVER CERTS
+- kube-config.yaml have the certificates and key files location, so you don't need to add these on every request
+- All cert related processes are managed by controller manager (CSR approving, CSR signing)
+--cluster-signing-cert-file=/etc/kubernetes/pki/ca.crt, --cluster-signing-key-file=/etc/kubernetes/pki/ca.key
+### Kubernetes TLS Certs Commands
+- openssl genrsa -out admin.key 2048 (key generation)
+- openssl req -new -key admin.key -subj "/CN=kube-admin/O=system:masters" -out admin.csr (Cert signing request)
+- openssl x509 -req -in admin.csr -CA car.crt -CAkey ca.key -out admin.crt (Sign certs)
+- curl https://kube-apiserver:6443/api/v1/pods --key admin.key --cert admin.crt --cacert ca.crt (send request with certs and key)
+- openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout (Check the cert)
+- kubectl get csr (Get Certificate Signing Reqs)
+- kubectl certificate approve <csr_name> (Approves csr)
+- kubectl certificate deny <csr_name> (Rejects csr)
+#### ETCD Certs
+- peer public and private key certs need to be created in order to be able to use etcd-server in multi clusters as high availability
+- etcd.yaml;
+  --key-file=/path-certs/etcdserver.key
+  --cert-file=/path-certs/etcdserver.crt
+  --peer-cert-file=/path-certs/etcdpeer1.crt
+  --peer-client-cert-auth=true
+  --peer-key-file=/etc/kubernetes/pki/etcd/peer.key
+  --peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+  --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+#### kube-apiserver Certs
+--etcd-cafile=/var/lib/kubernetes/ca.pem
+--etcd-certfile=/var/lib/kubernetes/apiserver-etcd-client.crt
+--etcd-keyfile=/var/lib/kubernetes/apiserver-etcd-client.key
+--client-ca-file=/var/lib/kubernetes/ca.pem
+--tls-cert-file=/var/lib/kubernetes/apiserver.crt
+--tls-private-key-file=/var/lib/kubernetes/apiserver.key
+#### kube-apiserver Certs
+- system:node:<node_name> group
+### KubeConfig
+- Instead of writing certs in all commands, you specify these files in kubeconfig
+- $HOME/.kube/config default location for kube config file
+- Clusters = Development, Production, Google
+  Users = Admin, Dev, Prod
+  Contexts = Admin@Production, Dev@Google
+### KubeConfig Commands
+- kubectl config view
+- kubectl config view --kubeconfig=my-custom-kubeconfig (Run commands on custom konfig file)
+- kubectl config use-context prod-user@production (Changes default context)
+### API Groups
+- /metrics - /healthz - /version - /api - /apis - /logs
+- /api -> Core group
+  /apis -> Named group
+- Check Kubernetes api reference page
+### API Groups Commands
+- curl https://kube-master:6443/version (API version check)
+- curl https://kube-master:6443/api/v1/pods (get pods)
+- curl https://localhost:6443 -k (get all api paths)
+- curl https://localhost:6443/apis (get all apis)
+- kubectl proxy (Launches a proxy service on localhost:8001 you can check kubernetes apis by curl)
+### Authorization
+- Limitations for the authenticators
+- Authorization types; Node, ABAC (Attribute based), RBAC (Role based), Webhook (3rd Party)
+- kube-apiserver.service file --authorization-mode=AlwaysAllow
+                              --authorization-mode=AlwaysDeny
+                              --authorization-mode=Node,RBAC,Webhook
+#### Authorization RBAC
+- Create role yaml
+- Create a roleBinding to link the user to the role
+#### Authorization RBAC Commands
+- kubectl auth can-i create deployments (Existing user permission check)
+- kubectl auth can-i create deployments --as dev-user --namespace ns1 (dev-user permission check in ns1 namespace)
+  kubectl get pods as <user_name> (Check permissions for specific user)
+### Cluster roles and Role Bindings
+- Namespace scoped resources = pods, relicasets, jobs, deployments, services, secrets, roles, rolebindings, configmaps, pvc
+- Cluster scoped resources = nodes, PV, clusterroles, clusterrolebindings, certificatesigningrequests, namespaces
+- Cluster scoped resources roles and role bindings = cluster roles, cluster role bindings
+### Authorization Commands
+- kubectl create role | rolebinding | clusterrole | clusterrolebinding
+### Service Accounts
+- Are used by machines
+- When a sevice acc is created, system automatically creates a token, and store it as a secret, then links it to the service account (JWT token)
+  You can see the secret by using 'kubectl describe secret <secret_name>'
+  There is no expiry date on that token but after v1.22 tokens have expiry dates
+- After v1.24 after creating a new service account token is not generatede automatically
+  Run 'kubectl create token <serviceacc_name>' to generate a token with an expiry date
+- Kubernetes automatically deploy default service account
+- When a pod is created the secret token on the service account will be mounted to the new pod
+### Service Accounts Commands
+- kubectl create serviceaccount <serviceacc_name>
+- kubectl exec -it <pod_name> -- ls /var/run/secrets/kubernetes.io/serviceaccount (List all secrets in service account)
+- kubectl describe secret <secret_name>
+- kubectl create token <serviceacc_name>
+### Image Security
+- Image fetch structure => <Registry>/<user_acc>/<image_repo>
+                           docker.io/library/nginx
+### Image Security Commands
+- docker login private-registry.io (Login to private registry)
+- docker run private-registry.io/apps/internal-app (Run image from private registry)
+- kubectl create secret docker-registry regcred \
+   --docker-server=private-registry.io         \
+   --docker-username=registry-user       \
+   --docker-password=registry-password       \
+   --docker-email=registry-user@org          \
+### Docker Security
+- Manage security settings on container level
+- Docker uses Linux capabilities to create security
+### Docker Security Commands
+- docker run --user=<user_name> <image_name> sleep 3600 (Runs image with specified user)
+- docker run --cap-add MAC_ADMIN <image_name> (Add MAC_ADMIN permission to image)
+  docker run --cap-drop KILL <image_name> (Drop KILL permission from image)
+  docker run --privileged <image_name> (Add full privileged permission to image)
+### Security Context
+- Manage security settings on pod level
+### Network Policy
+- Ingress = As a web server the traffic coming from the users is ingress traffic
+  Egress =  As a web server the traffic sent to the app server is agress traffic
+- By default AllowAll is set in Kubernetes that allows any pod to communicate with any pod
+- You can configure ingress and egress traffic by network policy
+- 3rd parties that support network policies; Kube-router, Calico, Romana, Weave-net
+  3rd party that NOT support network policies; Flannel
+## General Commands and tags
+## Storage
+### Docker Storage
+- Storage drivers - AUFS | ZFS | BTRFS | DEVICE MAPPER | OVERLAY
+- File system -> /var/lib/docker/aufs | containers | image | volumes
+- Docker runs in layered architecture, each layer only stores the changes from the previous layer, improves build performance
+For example, when you update app code docker updates it very fast
+- Layers;
+  1 - Image Layer (When image build completed, this layer accepts no change - Read only)
+  2 - Container Layer (Logs, temp files - Read Write)
+- COPY-ON-WRITE, when you modify source code in image layer, Docker creates a copy of the new source code in container layer, and you can keep on modifying this copied file in container layer.
+- Volumes, you can store COPY-ON-WRITE changes in container layer in volumes. Even if container is destroyed the data is persistent as volume.
+- Volume mounting = Mounts the volume, bind mounting = Mounts the directory to the container
+### Docker Storage 
+- docker volume create <volume_name>
+- docker run -v /<path>/<volume_name>:/var/lib/mysql <container_name> (Creates volume and mounts on container)
+  docker run --mount type=bind,source=/<path>/<volume_name>,target=/var/lib/<container_name> <container_name> (New style for the above command)
+- docker run -it --name mysql --volume-driver rexray/ebs --mount src=ebs-vol,target=/var/lib/mysql mysql (Creates an ebs volume and mounts to the container)
+### Container Storage Interface(CSI)
+- Universal container orchestration tool interface
+- CreateVolume, DeleteVolume, ControllerPublishVolume
+  ### Volumes
+- Volume drivers - Local | Azure File Storage | Convoy | AWS EBS
+  ### Volumes
 
 ## General Commands and tags
 - kubectl <command_text> -o <output_options(wide, yaml, json...)>(runs command and outputs the result in given output options (wide: detailed output on terminal, others are file outputs))
@@ -393,4 +530,10 @@ kube-apiserver.service section => --token-auth-file=<token_file>.csv
 - export ETCDCTL_API=3 (Configures ETCDCTL_API to 3)
 - kubectl config <arg> (kubernetes config command to see, update, add contexts, clusters...)
 - ps -ef | grep etcd (Check service configurations)
-
+- <command> | grep \-\-etcd (Equals to 'grep --etcd')
+- docker ps -a (List all containers)
+- docker logs <container_id> (View container logs)
+- cat <file> | base64 -w 0 (convert file to base64 as single line)
+- echo $HOME (shows home folder name - /root)
+- ps aux (List running processes)
+- whoami (Gets current user)
