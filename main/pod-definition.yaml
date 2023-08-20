@@ -18,8 +18,9 @@ spec:
   containers:
   - name: nginx-controller
     image: nginx
-    command: ["sleep"]
-    args: ["1000"]
+    command: 
+    - sleep
+    - "1000"
   - name: busybox
     image: busybox
     env:

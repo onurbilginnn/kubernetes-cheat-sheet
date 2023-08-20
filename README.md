@@ -243,7 +243,7 @@ Rolling update (Kubernetes Default) (Replaces all pods one by one - cons: Update
 - kubectl rollout status <deployment/deployment_name> (See the status of the rollout)
 - kubectl rollout history <deployment/deployment_name> (See the history of the rollout)
 - kubectl rollout undo <deployment/deployment_name> (Rollback the deployment upgrade)
-- kubectl set image <deployment/deployment_name> <image_name>=<image> (Updates as defined recreate or rolling)
+- kubectl set image deployment/<deployment_name> <image_name>=<image> (Updates as defined recreate or rolling)
 ### Application Commands
 - Initial commands on containers to run when the container first runs
 - Kubernetes definition.yaml file always overwrites Docker entrypoint commands in the Dockerfile
@@ -326,9 +326,9 @@ if node comes online it is still unschedulable)
 - service etcd restart
 - service kube-apiserver start
 **** For all etcd commands add certificates to the commands****
-   --endpoints=https://127.0.0.1:2379
-   --cacert=/etc/etcd/ca.crt
-   --cert=/etc/etcd/etcd-server.crt
+   --endpoints=https://127.0.0.1:2379 \
+   --cacert=/etc/etcd/ca.crt \ 
+   --cert=/etc/etcd/etcd-server.crt \
    --key=/etc/etcd/etcd-server.key  
 
 ## Security
@@ -378,6 +378,7 @@ kube-apiserver.service section => --token-auth-file=<token_file>.csv
 --cluster-signing-cert-file=/etc/kubernetes/pki/ca.crt, --cluster-signing-key-file=/etc/kubernetes/pki/ca.key
 ### Kubernetes TLS Certs Commands
 - openssl genrsa -out admin.key 2048 (key generation)
+- openssl rsa -in <private_key_file_name>.key -pubout > <public_key_file_name>.pem (Creates public key)
 - openssl req -new -key admin.key -subj "/CN=kube-admin/O=system:masters" -out admin.csr (Cert signing request)
 - openssl x509 -req -in admin.csr -CA car.crt -CAkey ca.key -out admin.crt (Sign certs)
 - curl https://kube-apiserver:6443/api/v1/pods --key admin.key --cert admin.crt --cacert ca.crt (send request with certs and key)
@@ -414,6 +415,7 @@ kube-apiserver.service section => --token-auth-file=<token_file>.csv
 - kubectl config view
 - kubectl config view --kubeconfig=my-custom-kubeconfig (Run commands on custom konfig file)
 - kubectl config use-context prod-user@production (Changes default context)
+- kubectl get nodes --kubeconfig=<custom_kubeconfig_file> (Run commands by using custom kubeconfig file)
 ### API Groups
 - /metrics - /healthz - /version - /api - /apis - /logs
 - /api -> Core group
@@ -507,10 +509,375 @@ For example, when you update app code docker updates it very fast
 ### Container Storage Interface(CSI)
 - Universal container orchestration tool interface
 - CreateVolume, DeleteVolume, ControllerPublishVolume
-  ### Volumes
-- Volume drivers - Local | Azure File Storage | Convoy | AWS EBS
-  ### Volumes
+### Volumes
+- Volume drivers - Local | Azure File Storage | Convoy | AWS EBS ...
+- If a pod deleted the data that is processed by that pod gets deleted too, so if we mount a volume to the pod the processed data will be safe in the volume even if the pod gets deleted.
+### Persistent Volumes
+- If you have a large environment, it is difficult to configure volumes in all pod definition files, every time updating, creating etc is really difficult, so we can use persistent volumes.
+- Persistent Volume, cluster-wide pool of storage volumes configured by an administrator to be used by users deploying apps on the cluster. 
+### Persistent Volume Claims(PVC)
+- As administrator creates persistent volumes, user creates persistent volume claims.
+- Once a PVC is created Kubernetes binds it with the persistent volume
+- PVC - Persistent Volume match criterias; sufficent capacity, access modes, volume modes, storage class, selector (if any)
+- If there are no other options PVC could match with larger Persistent Volume.
+- If there is no reliable Persistent Volume, the PVC will stay in Pending state
+- Same definition file on deployments, replicasets, pods
+### Persistent Volume Claims(PVC) Commands
+- kubectl delete persistentvolumeclaim <pvc_name> (Delete PVC)
+### Storage Classes
+- Static Provisioning; before creation of th pv you should create the storage in AWS, GCP, local etc.
+- Dynamic Provisioning; automatically creates the storage when a claim is made;
+- To implement dynamic provisioning, you use Storage Class in Kubernetes.
+- You don't need to create a persistent volume since the storage provisioning creates both storage and persistent volume automatically.
+## Networking
+### Switching & Routing
+- Switching, connection bridge for 2 seperate computers, systems within the same network
+- When the ip CIDRs are assigned, the computers could ping each other through switch
+- Routing, connection bridge for 2 seperate networks
+- /proc/sys/net/ipv4/ip_forward (IP forward file default value = 0, to enable forwarding change it to=1)
+  To enable ip forwarding across reboots you should modify also /etc/sysctl.conf file (net.ipv4.ip_forward = 1)
+- To persist ip command changes you should change them in /etc/network/interfaces file
+### Switching & Routing Commands
+- ip link (List and modify interfaces on the host - eth0)
+- ip addr (List ip addresses assigned to the interfaces)
+- ip addr add <network_CIDR> dev <interface_no(eth0)> (Assigning network IP address CIDR)
+- ping <ip_addr> (Ping the other system)
+- route (Displays kernel IP routing)
+- ip route add <target_network_CIDR> via <ip_addr> (Add route)
+- ip route add default via <ip_addr> (Add default router)
+### DNS
+- Assign names to IPs
+- Local ip name file -> /etc/hosts, can have multi names for one ip (Name Resolution)
+- DNS server holds all network names in one place
+- /etc/resolv.conf (DNS-nameserver pointer file)
+- Local /etc/hosts file has priority over /etc/resolv.conf dns file, if same IP has record on both /etc/hosts & /etc/resolv.conf file, /etc/hosts record will be used.
+  But you can change this priority order in /etc/nsswitch.conf file.
+- . (Root)
+  .com/.net/.edu/.org/.io (Top level domain)
+  www (Subdomain)
+- DNS server can cache the IP you sent in order to improve search perf
+- Record Types;
+  A = IPv4
+  AAAA = IPv6
+  CNAME = food.web-server | eat.web-server | hungry.web-server (name to name mapping)
+### DNS Commands
+- ping www.google.com
+- nslookup www.google.com (query a host name from a dns server)
+- dig www.google.com (More detailed query result)
+### Network Namespaces
+- Host = house, namespace = room, veth=pipe, virtual cable
+- You can create a virtual switch to connect many namespaces to each other easily (LINUX BRIDGE)
+- Network Creation Steps
+  1- Create Network Namespace
+  2- Create Bridge Network/Interface
+  3- Create veth pairs(pipe, virtual cable)
+  4- Attach veth to Namespace
+  5- Attach other veth to bridge
+  6- Assign IP addresses
+  7- Bring the interfaces up
+  8- Enable NAT - IP Masquerade
+### Network Namespaces Commands
+- ps aux (List processes)
+- ip netns add <namespace_name> (Add namespace to host)
+- ip netns (List namespace in the host)
+- ip netns exec <namespace_name> ip link (ip link command will be executed in the given namespace)
+- ip -n <namespace_name> link (ip link command will be executed in the given namespace)
+- ip link add <veth_name1> type veth peer name <veth_name2> (Add cable between namespaces)
+- ip link set <veth_name> netns <namespace_name> (Assign bridge gate to the namespace)
+- ip -n <namespace_name> addr add <ip_addr> dev <veth_name> (add ip to veth)
+- ip -n <namespace_name> link set <veth_name> up (Waking veth links)
+- arp (Check ip statuses)
+- ip netns exec <namespace_name> arp (Check ips in the namespace)
+- ip link add <bridge_name> type bridge (Create virtual switch)
+#### Network Virtual Bridge Commands
+- ip link set dev <bridge_name> up (Wake up bridge)
+- ip -n <namespace_name> link del <veth_name> (Delete the veth, if you delete one end of the veth, other end will be deleted automatically)
+- ip link add <veth_name1> type veth peer name <bridge_name> (Link veth to the virtual switch)
+- ip link set <veth_name> netns <namespace_name> (Add veth to the namespace)
+- ip link set <bridge_name> master <virtual_switch_name> (Link bridge to the virtual switch)
+- ip -n <namespace_name> addr add <ip_addr> dev <veth_name> (add ip to veth)
+- ip link set dev <veth_name> up (Wake up veth)
+- ip addr add <target_CIDR> dev <virtual_switch_name> (Add ip addr to virtual switch)
+- ip addr show eth0 (Shows eth0 only)
+  ip addr show bridge (Shows bridge only)
+### Network Namespaces Commands
+- iptables -t nat -A POSTROUTING -s <CIDR> -j MASQUERADE (Add NAT to the system)
+- iptables -t nat -A PREROUTING --dport 80 --to-destination <ip_addr:port> -j DNAT (Open namespace ip to the internet on port 80)
+### Docker Networking
+- Docker has a switch default in 192.168.1.10 - eth0
+- Whenever a container is created Docker creates a network namespace for it
+  Also creates the interfaces and attach them to the bridge and to container for networking
+### Docker Networking Commands
+- docker run --network none <image_name> (Run container without network)
+- docker run --network host <image_name> (Run container in the host)
+- docker run <image_name> (Run containers connected to the bridge)
+- ip link add <bridge_name(docker0)> type bridge (Add bridge)
+- docker inspect <namespace_id>
+### Container Networking Interface(CNI)
+- Set of standards that defines how programs should be developed to solve networking challenges.
+- Defines how the plugin should be developed and how container run times should invoke them.
+- Default supported plugins; BRIDGE, VLAN, IPVLAN, MACVLAN, WINDOWS, DHCP, host-local
+- ADD, DEL
+### Cluster Networking
+- Each node has eth0
+- Ports;
+  ETCD=2379, ETCD Clients=2380, Kube-api=6443, kubelet=10250, kube-scheduler=10251, kube-controller-manager=10252, services=30000<->32767
+### Pod Networking
+- Every pod should have an IP
+- Every pod should be able to communicate with every other POD in the same node
+- Every pod should be able to communicate with every other POD on other nodes without NAT
+- kubelet checks, --cni-conf-dir=/etc/cni/net.d when creating a container
+  then checks, --cni-bin-dir=/etc/cni/bin, and executes the script inside the folder
+  './net-script.sh add <container> <namespace>'
+### Cluster Networking in Kubernetes (CNI)
+- CNI config = kubelet.service -> --network-plugin=cni, --cni-bin-dir=/opt/cni/bin, --cni-conf-dir=/etc/cni/net.d
+- /opt/cni/bin includes all supported CNI plugins and executables
+- /etc/cni/net.d includes config files
+### CNI Weave
+- Creates daemonsets on all nodes to communicate with the pods
+- Creates its own bridge
+- Check Kubernetes installing add-ons section
+- Deploy Weave; 
+  kubectl apply -f "https://cloud.weave.works/k8s/net...." 
+- If you use kubeadm tool to deploy Weave you can see weave pods
+### IP Address Management - Weave
+- CNI is responsible on assigning IPs
+- ip-list.txt is the file on every node that is keeping ip addresses
+- CNI has two plugins that are managing IPs; DHCP and host-local
+- /etc/cni/net.d/net-script.conf (Config file for CNI)
+- Weave default IP range = 10.32.0.0/12
+### Service Networking
+- Services are cluster wide components, it is a virtual object.
+- A service is accessible through all pods on the cluster, irrespective of what nodes are the pods are on (Cluster IP)
+- NodePort enables external access to the node.
+- kube-proxy component creates or deletes IP:Port / Service Forward To rules for services when a service is created or deleted.
+- kube-proxy --proxy-mode [userspace | iptables | ipvs] ...
+  iptables -> IP:Port / Forward To (IP)
+- kube-api-server --service-cluster-ip-range ipNet (Default: 10.0.0.0/24) (Service IP assignment range)
+### Service Networking Commands
+- ps aux | grep kube-api-server (Gets kube-api-server configs)
+- iptables -L -t nat | grep <service_name> (Get ip table for the service)
+- cat /var/log/kube-proxy.log (See kube-proxy logs)
+- kubectl logs <kube-proxy_pod_name> (Get proxy configured in kube-proxy)
+### DNS in Kubernetes
+- Built in DNS-server = Kube DNS
+- When a service is created a record is created accordinglyl in Kube DNS
+- <service_name>.<namespace_name>.svc.cluster.local (Service FQDN)
+- <pod_IP_with_dashes>.<namespace_name>.pod.cluster.local (Pod FQDN)
+  http://10-244-2-5.apps.pod.cluster.local
+### CoreDNS in Kubernetes
+- /etc/hosts file is local DNS name server
+- /etc/resolv.conf file is pointer for global DNS name server
+- Pod entries are done by Kubernetes on global DNS name server are as below;
 
+  10-244-2-5  10.244.2.5
+  10-244-1-5  10.244.1.5
+  10-244-2-15 10.244.2.15
+  web-service 10.107.37.188
+
+- CoreDNS is deployed as a replicaset in kube-system namespace
+- ./Coredns executable
+- cat /etc/coredns/Corefile includes plugins and configs
+- /etc/resolv.conf file could be passed as a configMap object to the CoreDNS
+- CoreDNS creates a service to be reachable by other components in Kubernetes
+  kube-dns service is default name for it
+- cat /var/lib/kubelet/config.yaml (You can see IP addres of the DNS server under clusterDNS: <IP> options)
+- /etc/resolv.conf file has a search entry;
+  (search default.svc.cluster.local svc.cluster.local cluster.local)
+### CoreDNS in Kubernetes Commands
+- curl <service_name>
+- host <service_name> (See service FQDN and IP address, you can reach a service its name)
+  host web-service - web-service.default.svc.cluster local has address 10.107.37.188
+- host <pod_FQDN> (You can not reach a pod using its name, you should use pod FQDN)
+### Ingress
+- Ingress helps your users access your app using a single externally accessible URL that you can configure to route traffic to different services within your cluster based on the URL path, at the same time implements SSL.
+- Ingress is like a layer 7 load balancer built in to Kubernetes cluster.
+- To expose it to outside you need a NodePort or Load Balancer
+- Kubernetes cluster has no built in Ingress controller, you must deploy one. (GCP Load Balancer, NGINX, Contour, Haproxy, Traefik, Istio...)
+- The solution you deploy for Ingress is called = INGRESS CONTROLLER
+  The rules that you configure is called = INGRESS RESOURCES 
+- If a user tries to access a URL that does not match any of the rules on Ingress, then the user is directed to the service specified as the default backend. (Must remember to deploy a default service. For ex; error page)
+### Ingress Commands
+- kubectl describe ingress <ingress_name>
+## Design and Install a Kubernetes Cluster
+- Minikube for single node cluster, for testing developing
+- Kubeadm for on-prem
+  GKE for Google Cloud
+  Kops for AWS
+  Azure Kubernetes Service
+- Master can host workloads , best practice is not to host workloads on Master nodes.
+- You can seperate ETCD from the master node as a seperate node, on complex clusters
+### High Availability in Kubernetes
+- HA multi master nodes' kube-api-server needs a load balancer in front
+- HA multi master nodes' kube-controller-manager --leader-elect=true prop should be selected to make other controller managers in standby mode
+  --leader-elect=true
+  --leader-elect-lease-duration=15s
+  --leader-elect-renew-deadline=10s
+  --leader-elect-retry-period=2s
+- ETCD stacked topology, for HA seperate ETCD node = external ETCD Topology - harder to setup
+  If you use external ETCD topology config kube-api-server as --etcd-servers=https://<ip>:<port>,...
+### ETCD HA
+- Distributed key-value store
+- HA ETCD, since the same data is available across all nodes, you can easily read from any ETCD node.
+  For writes, internally two nodes elects a leader among them, and when one node becomes a leader other nodes become followers.
+  if the writes came through in the leader node, leader node processes the write and make sure that other nodes are sent a copy of data.
+  If the writes came in through any of the follower nodes, they forward the writes to the leader internally and leader processes the writes and send copies of the writes to the followers.
+  Writes is only considered completed only when all nodes finish writes. If some nodes fail, a write is considered to be complete if it is written to the majority(Quorum) of the nodes.
+  If the failed node comes back, the write will be written to it.
+  Majority - Quorum = ROUNDDOWN(N/2 + 1)
+  Fault Tolerance = Instance Qty - Quorum
+  When selecting the number of nodes it is logical to select odd numbers, because fault tolerance is same for 3 & 4 for example.
+- etcd.service --initial-cluster peer-1=https://${PEER1_IP}:<port>, peer-2=....
+## Install Kubernetes with kubeadm
+- kubeadm helps installing
+  Master node; kube-apiserver, etcd, node-controller, replica-controller
+  Worker node; kubelet
+- Steps;
+  1- Need multiple systems or VMs provisioned, a couple of nodes for our Kubernetes cluster
+  2- Install containerd on every node
+  3- Install kubeadm on every node
+  4- Initialize master server
+  5- Setup pod network
+  6- Join worker nodes to master node
+### Deployment with kubeadm
+- Installing kubeadm is the main page to look
+- Linux systems have control groups(Cgroup drivers) that are used to constrain resources that are allocated to different processes running on you machine.
+  There are 2 types of Cgroup drivers; cgroupfs, systemd
+  If containerd is using systemd all kubelet drivers must use systemd.
+### Deployment with kubeadm Commands
+- ps -p 1 (Checks cgroup driver type)
+- sudo systemctl restart containerd (Restarts containerd service)
+#### Installing kubeadm, kubelet,kubectl
+- Forwarding IPv4 and letting iptables see bridged traffic
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+br_netfilter
+EOF
+
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+- install kubeadm, kubectll, kubelet
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl
+
+mkdir -p /etc/apt/keyrings
+
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+sudo apt-get update
+
+sudo apt-get install -y kubelet=1.27.0-00 kubeadm=1.27.0-00 kubectl=1.27.0-00
+
+sudo apt-mark hold kubelet kubeadm kubectl
+
+- controlplane node initialize kubeadm
+  kubeadm init --apiserver-advertise-address=192.20.4.9 --apiserver-cert-extra-sans=controlplane --pod-network-cidr=10.244.0.0/16
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+- ssh to other nodes and run
+  kubeadm join 192.20.4.9:6443 --token m6y12t.x4zutx5kymj0jalw \
+        --discovery-token-ca-cert-hash sha256:f2665e279232d19bd661c87f5bedad9ade756d21ada4cd7e3b2fbe53e8fcd24f 
+## Troubleshooting
+### Application Failure
+- Check accessibility
+  1- use curl for web server if app is accessible
+  2- check service (Compare selectors)
+  3- check pod
+  4- check pod logs
+     kubectl logs <pod_name>
+     kubectl logs <pod_name> -f --previous
+  5- check dependent services, pods
+### Controlplane Failure
+- Check node status
+- Check pods
+- Check manifests
+- Check controlplane pods
+- Check controlplane services
+  service kube-apiserver status
+  service kube-controller-manager status
+  service kube-scheduler status
+  service kube-proxy status
+  service kubelet status
+- Check pod logs
+  kubetl logs <controlplane_pod_name> -n kube-system
+  sudo journalctl -u kube-apiserver
+### Worker Node Failure
+- Check node status
+  Commands;
+  top
+  df -h
+- Check kubelet;
+  service kubelet status
+  sudo journalctl -u kubelet
+  openssl x509 -in /var/lib/kubelet/worker-1.crt -text
+### Networking Failure
+- Kubernetes resources for coreDNS are:   
+  1- A service account named coredns,
+  2- Cluster-roles named coredns and kube-dns
+  3- Clusterrolebindings named coredns and kube-dns, 
+  4- A deployment named coredns,
+  5- A configmap named coredns and a
+  6- Service named kube-dns.
+- Port 53 is used for for DNS resolution.
+#### Troubleshooting issues related to coreDNS
+- If you find CoreDNS pods in pending state first check network plugin is installed.
+- Coredns pods have CrashLoopBackOff or Error state
+  If you have nodes that are running SELinux with an older version of Docker you might experience a scenario where the coredns pods are not starting. To solve that you can try one of the following options:
+  1- Upgrade to a newer version of Docker.
+  2- Disable SELinux.
+  3- Modify the coredns deployment to set allowPrivilegeEscalation to true:
+     kubectl -n kube-system get deployment coredns -o yaml | \
+     sed 's/allowPrivilegeEscalation: false/allowPrivilegeEscalation: true/g' | \
+     kubectl apply -f -
+  4- Another cause for CoreDNS to have CrashLoopBackOff is when a CoreDNS Pod deployed in Kubernetes detects a loop.
+      There are many ways to work around this issue, some are listed here:
+      - Add the following to your kubelet config yaml: resolvConf: <path-to-your-real-resolv-conf-file> This flag tells kubelet to pass an alternate resolv.conf to Pods. For systems using systemd-resolved, /run/systemd/resolve/resolv.conf is typically the location of the "real" resolv.conf, although this can be different depending on your distribution.
+      - Disable the local DNS cache on host nodes, and restore /etc/resolv.conf to the original.
+      - A quick fix is to edit your Corefile, replacing forward . /etc/resolv.conf with the IP address of your upstream DNS, for example forward . 8.8.8.8. But this only fixes the issue for CoreDNS, kubelet will continue to forward the invalid resolv.conf to all default dnsPolicy Pods, leaving them unable to resolve DNS.
+- 3. If CoreDNS pods and the kube-dns service is working fine, check the kube-dns service has valid endpoints.
+     - kubectl -n kube-system get ep kube-dns
+     If there are no endpoints for the service, inspect the service and make sure it uses the correct selectors and ports.
+#### Troubleshooting issues related to kube-proxy
+- Check kube-proxy pod in the kube-system namespace is running.
+- Check kube-proxy logs.
+- Check configmap is correctly defined and the config file for running kube-proxy binary is correct.
+- kube-config is defined in the config map.
+- check kube-proxy is running inside the container
+  netstat -plan | grep kube-proxy
+## Other Topics
+### YAML Notes
+- Dictionary is an unordered list, array/list is an ordered list.
+- Dictionaries are equal if all their props and values are same, regardless of the order.
+- Arrays/Lists are NOT equal if the order is different even if the items are same.
+### JSON Path
+- $ sign means root curly paranthesis in json = {}
+- Get parent value = $.<parent_dictionary_name>
+- Get child value = $.<parent_dictionary_name>.<child_dictionary_name>...
+- Get list value = $[0] - First element
+                   $[2] - 3rd element
+                   $[0, 2] - 1st & 3rd element
+                   $[0:2] - 1st to 3rd element not included 3rd element, 1st element included
+                   $[-1:] - Gets the last element on the list
+                   $[-3:] - Gets the last 3 elements on the list
+                   $[?(@ > 40)] - Gets values greater than 40
+                   $[?(@ == 40)] - Gets values equals to 40
+                   $[?(@ != 40)] - Gets values not equals to 40
+### JSON Path Wild Cards
+- $.*.color (Get all keys color prop values)
+- $.[*].model (Get all items model prop values)
+- $.*.wheels[*].model (Get all props wheels model prop values)
+- * returns array always
+### JSON Path Kubernetes
+- kubectl get pods -o=jsonpath='{.items[0].spec.containers[0].image}'
+- kubectl get nodes -o=jsonpath='{.items[*].metadata.name'} {"\n"} {.items[*].status.capacity.cpu}'
+- kubectl get nodes -o=jsonpath='{range .items[*]}{"\t"}{.status.capacity.cpu}{"\n"}{end}'
+- kubectl get nodes -o=custom-columns=NODE:.metadata.name,CPU:.status.capacity.cpu
+- kubectl get nodes --sort-by=.metadata.name
 ## General Commands and tags
 - kubectl <command_text> -o <output_options(wide, yaml, json...)>(runs command and outputs the result in given output options (wide: detailed output on terminal, others are file outputs))
 - kubectl <command_text> --help (lists all the options for the given command)
@@ -521,15 +888,17 @@ For example, when you update app code docker updates it very fast
 - kubectl api-resources (List all commands with short keys)
 - kubectl explain <component_type> (explains the definition file for given component type)
 - kubectl get all (Lists all components pods, replicasets, deployments ...)
-- k get pods | wc -l (Counts lines on the output)
+- kubectl get pods | wc -l (Counts lines on the output)
 - kubectl get <resource_name> --selector env=dev,bu=finance --no-headers (selects resources with env=dev and bu=finance label)
 - kubectl create -f . (Creates all files within the folder)
-- kubectl exec -n <namespace_name> -it <pod_name> -- cat <file_name>  (Checks the file in the pod in given namespace, exec command runs commands in given pod)
+- kubectl exec -n <namespace_name> -it <pod_name> -- cat <file_name>  (Runs the command after -- sign in the pod)
+- kubectl exec <pod_name> <command> (Runs command on the pod)
+- kubectl logs <pod_name> (Get pod logs)
 - alias k=kubectl (shortcut k defined in terminal to call kubectl)
 - cat /etc/*release* (Find current OS)
 - export ETCDCTL_API=3 (Configures ETCDCTL_API to 3)
 - kubectl config <arg> (kubernetes config command to see, update, add contexts, clusters...)
-- ps -ef | grep etcd (Check service configurations)
+- ps -ef | grep etcd | grep ... (Check service configurations)
 - <command> | grep \-\-etcd (Equals to 'grep --etcd')
 - docker ps -a (List all containers)
 - docker logs <container_id> (View container logs)
@@ -537,3 +906,7 @@ For example, when you update app code docker updates it very fast
 - echo $HOME (shows home folder name - /root)
 - ps aux (List running processes)
 - whoami (Gets current user)
+- netstat -anp |grep <port_no> |wc -l (Count active connections on port)
+- k exec <pod_name> -- nslookup <service_name> > /<path>/<file_name> (Writes nslookup output to the file that is specified)
+- service <service_name> start (Starts service)
+- curl -LO https://dl.k8s.io/release/v1.27.0/bin/linux/amd64/kubectl
