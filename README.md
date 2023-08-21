@@ -1,3 +1,6 @@
+## Kubernetes Cheat Sheet Commands
+- alias k=kubectl
+- complete -o default -F __start_kubectl k
 ## Docker
 - Container management tool
 
