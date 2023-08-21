@@ -913,3 +913,4 @@ sudo apt-mark hold kubelet kubeadm kubectl
 - k exec <pod_name> -- nslookup <service_name> > /<path>/<file_name> (Writes nslookup output to the file that is specified)
 - service <service_name> start (Starts service)
 - curl -LO https://dl.k8s.io/release/v1.27.0/bin/linux/amd64/kubectl
+- ping <ip> (You can check communication by pinging)
