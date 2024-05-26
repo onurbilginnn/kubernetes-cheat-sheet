@@ -400,12 +400,12 @@ kube-apiserver.service section => --token-auth-file=<token_file>.csv
   --peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt <br>
   --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt <br>
 #### kube-apiserver Certs
---etcd-cafile=/var/lib/kubernetes/ca.pem
---etcd-certfile=/var/lib/kubernetes/apiserver-etcd-client.crt
---etcd-keyfile=/var/lib/kubernetes/apiserver-etcd-client.key
---client-ca-file=/var/lib/kubernetes/ca.pem
---tls-cert-file=/var/lib/kubernetes/apiserver.crt
---tls-private-key-file=/var/lib/kubernetes/apiserver.key
+--etcd-cafile=/var/lib/kubernetes/ca.pem <br>
+--etcd-certfile=/var/lib/kubernetes/apiserver-etcd-client.crt <br>
+--etcd-keyfile=/var/lib/kubernetes/apiserver-etcd-client.key <br>
+--client-ca-file=/var/lib/kubernetes/ca.pem <br>
+--tls-cert-file=/var/lib/kubernetes/apiserver.crt <br>
+--tls-private-key-file=/var/lib/kubernetes/apiserver.key <br>
 #### kube-apiserver Certs
 - system:node:<node_name> group
 ### KubeConfig
@@ -673,10 +673,10 @@ For example, when you update app code docker updates it very fast
 - /etc/resolv.conf file is pointer for global DNS name server
 - Pod entries are done by Kubernetes on global DNS name server are as below;
 
-  10-244-2-5  10.244.2.5
-  10-244-1-5  10.244.1.5
-  10-244-2-15 10.244.2.15
-  web-service 10.107.37.188
+  10-244-2-5  10.244.2.5 <br> 
+  10-244-1-5  10.244.1.5 <br>
+  10-244-2-15 10.244.2.15 <br>
+  web-service 10.107.37.188 <br>
 
 - CoreDNS is deployed as a replicaset in kube-system namespace
 - ./Coredns executable
@@ -713,11 +713,11 @@ For example, when you update app code docker updates it very fast
 ### High Availability in Kubernetes
 - HA multi master nodes' kube-api-server needs a load balancer in front
 - HA multi master nodes' kube-controller-manager --leader-elect=true prop should be selected to make other controller managers in standby mode
-  --leader-elect=true
-  --leader-elect-lease-duration=15s
-  --leader-elect-renew-deadline=10s
-  --leader-elect-retry-period=2s
-- ETCD stacked topology, for HA seperate ETCD node = external ETCD Topology - harder to setup
+  --leader-elect=true <br>
+  --leader-elect-lease-duration=15s <br>
+  --leader-elect-renew-deadline=10s <br>
+  --leader-elect-retry-period=2s <br>
+- ETCD stacked topology, for HA seperate ETCD node = external ETCD Topology - harder to setup <br>
   If you use external ETCD topology config kube-api-server as --etcd-servers=https://<ip>:<port>,...
 ### ETCD HA
 - Distributed key-value store
