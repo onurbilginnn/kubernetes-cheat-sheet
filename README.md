@@ -722,13 +722,13 @@ For example, when you update app code docker updates it very fast
 ### ETCD HA
 - Distributed key-value store
 - HA ETCD, since the same data is available across all nodes, you can easily read from any ETCD node.
-  For writes, internally two nodes elects a leader among them, and when one node becomes a leader other nodes become followers.
-  if the writes came through in the leader node, leader node processes the write and make sure that other nodes are sent a copy of data.
-  If the writes came in through any of the follower nodes, they forward the writes to the leader internally and leader processes the writes and send copies of the writes to the followers.
-  Writes is only considered completed only when all nodes finish writes. If some nodes fail, a write is considered to be complete if it is written to the majority(Quorum) of the nodes.
-  If the failed node comes back, the write will be written to it.
-  Majority - Quorum = ROUNDDOWN(N/2 + 1)
-  Fault Tolerance = Instance Qty - Quorum
+  For writes, internally two nodes elects a leader among them, and when one node becomes a leader other nodes become followers. <br>
+  if the writes came through in the leader node, leader node processes the write and make sure that other nodes are sent a copy of data. <br>
+  If the writes came in through any of the follower nodes, they forward the writes to the leader internally and leader processes the writes and send copies of the writes to the followers. <br>
+  Writes is only considered completed only when all nodes finish writes. If some nodes fail, a write is considered to be complete if it is written to the majority(Quorum) of the nodes. <br>
+  If the failed node comes back, the write will be written to it. <br>
+  Majority - Quorum = ROUNDDOWN(N/2 + 1) <br>
+  Fault Tolerance = Instance Qty - Quorum <br>
   When selecting the number of nodes it is logical to select odd numbers, because fault tolerance is same for 3 & 4 for example.
 - etcd.service --initial-cluster peer-1=https://${PEER1_IP}:<port>, peer-2=....
 ## Install Kubernetes with kubeadm
@@ -751,40 +751,40 @@ For example, when you update app code docker updates it very fast
 - ps -p 1 (Checks cgroup driver type)
 - sudo systemctl restart containerd (Restarts containerd service)
 #### Installing kubeadm, kubelet,kubectl
-- Forwarding IPv4 and letting iptables see bridged traffic
-cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
-br_netfilter
-EOF
+- Forwarding IPv4 and letting iptables see bridged traffic <br>
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf <br>
+br_netfilter <br>
+EOF <br>
 
-cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
-net.bridge.bridge-nf-call-ip6tables = 1
-net.bridge.bridge-nf-call-iptables = 1
-EOF
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf <br>
+net.bridge.bridge-nf-call-ip6tables = 1 <br>
+net.bridge.bridge-nf-call-iptables = 1 <br>
+EOF <br>
 - install kubeadm, kubectll, kubelet
-sudo apt-get update
-sudo apt-get install -y apt-transport-https ca-certificates curl
+sudo apt-get update <br>
+sudo apt-get install -y apt-transport-https ca-certificates curl <br>
 
-mkdir -p /etc/apt/keyrings
+mkdir -p /etc/apt/keyrings <br>
 
-curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg <br>
 
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list <br>
 
-sudo apt-get update
+sudo apt-get update <br>
 
-sudo apt-get install -y kubelet=1.27.0-00 kubeadm=1.27.0-00 kubectl=1.27.0-00
+sudo apt-get install -y kubelet=1.27.0-00 kubeadm=1.27.0-00 kubectl=1.27.0-00 <br>
 
-sudo apt-mark hold kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl <br>
 
 - controlplane node initialize kubeadm
-  kubeadm init --apiserver-advertise-address=192.20.4.9 --apiserver-cert-extra-sans=controlplane --pod-network-cidr=10.244.0.0/16
+  kubeadm init --apiserver-advertise-address=192.20.4.9 --apiserver-cert-extra-sans=controlplane --pod-network-cidr=10.244.0.0/16 <br>
 
-  mkdir -p $HOME/.kube
-  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+  mkdir -p $HOME/.kube <br>
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config <br>
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config <br>
 - ssh to other nodes and run
-  kubeadm join 192.20.4.9:6443 --token m6y12t.x4zutx5kymj0jalw \
-        --discovery-token-ca-cert-hash sha256:f2665e279232d19bd661c87f5bedad9ade756d21ada4cd7e3b2fbe53e8fcd24f 
+  kubeadm join 192.20.4.9:6443 --token m6y12t.x4zutx5kymj0jalw \ <br>
+        --discovery-token-ca-cert-hash sha256:f2665e279232d19bd661c87f5bedad9ade756d21ada4cd7e3b2fbe53e8fcd24f <br>
 ## Troubleshooting
 ### Application Failure
 - Check accessibility
