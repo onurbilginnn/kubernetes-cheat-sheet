@@ -839,12 +839,12 @@ sudo apt-mark hold kubelet kubeadm kubectl <br>
      kubectl apply -f - <br>
   4- Another cause for CoreDNS to have CrashLoopBackOff is when a CoreDNS Pod deployed in Kubernetes detects a loop. <br>
       There are many ways to work around this issue, some are listed here: <br>
-      - Add the following to your kubelet config yaml: resolvConf: <path-to-your-real-resolv-conf-file> This flag tells kubelet to pass an alternate resolv.conf to Pods. For systems using systemd-resolved, /run/systemd/resolve/resolv.conf is typically the location of the "real" resolv.conf, although this can be different depending on your distribution.
-      - Disable the local DNS cache on host nodes, and restore /etc/resolv.conf to the original.
-      - A quick fix is to edit your Corefile, replacing forward . /etc/resolv.conf with the IP address of your upstream DNS, for example forward . 8.8.8.8. But this only fixes the issue for CoreDNS, kubelet will continue to forward the invalid resolv.conf to all default dnsPolicy Pods, leaving them unable to resolve DNS.
-- 3. If CoreDNS pods and the kube-dns service is working fine, check the kube-dns service has valid endpoints.
-     - kubectl -n kube-system get ep kube-dns
-     If there are no endpoints for the service, inspect the service and make sure it uses the correct selectors and ports.
+      - Add the following to your kubelet config yaml: resolvConf: <path-to-your-real-resolv-conf-file> This flag tells kubelet to pass an alternate resolv.conf to Pods. For systems using systemd-resolved, /run/systemd/resolve/resolv.conf is typically the location of the "real" resolv.conf, although this can be different depending on your distribution. <br>
+      - Disable the local DNS cache on host nodes, and restore /etc/resolv.conf to the original. <br>
+      - A quick fix is to edit your Corefile, replacing forward . /etc/resolv.conf with the IP address of your upstream DNS, for example forward . 8.8.8.8. But this only fixes the issue for CoreDNS, kubelet will continue to forward the invalid resolv.conf to all default dnsPolicy Pods, leaving them unable to resolve DNS. <br>
+- 3. If CoreDNS pods and the kube-dns service is working fine, check the kube-dns service has valid endpoints. <br>
+     - kubectl -n kube-system get ep kube-dns <br>
+     If there are no endpoints for the service, inspect the service and make sure it uses the correct selectors and ports. <br>
 #### Troubleshooting issues related to kube-proxy
 - Check kube-proxy pod in the kube-system namespace is running.
 - Check kube-proxy logs.
