@@ -327,12 +327,12 @@ if node comes online it is still unschedulable)
 --data-dir /var/lib/<file_name>
 - systemctl daemon-reload
 - service etcd restart
-- service kube-apiserver start
+- service kube-apiserver start <br>
 **** For all etcd commands add certificates to the commands****
-   --endpoints=https://127.0.0.1:2379 \
-   --cacert=/etc/etcd/ca.crt \ 
-   --cert=/etc/etcd/etcd-server.crt \
-   --key=/etc/etcd/etcd-server.key  
+   --endpoints=https://127.0.0.1:2379 \ <br>
+   --cacert=/etc/etcd/ca.crt \  <br>
+   --cert=/etc/etcd/etcd-server.crt \ <br>
+   --key=/etc/etcd/etcd-server.key   <br>
 
 ## Security
 ### Primitives
@@ -391,14 +391,14 @@ kube-apiserver.service section => --token-auth-file=<token_file>.csv
 - kubectl certificate deny <csr_name> (Rejects csr)
 #### ETCD Certs
 - peer public and private key certs need to be created in order to be able to use etcd-server in multi clusters as high availability
-- etcd.yaml;
-  --key-file=/path-certs/etcdserver.key
-  --cert-file=/path-certs/etcdserver.crt
-  --peer-cert-file=/path-certs/etcdpeer1.crt
-  --peer-client-cert-auth=true
-  --peer-key-file=/etc/kubernetes/pki/etcd/peer.key
-  --peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
-  --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+- etcd.yaml; <br>
+  --key-file=/path-certs/etcdserver.key <br>
+  --cert-file=/path-certs/etcdserver.crt <br>
+  --peer-cert-file=/path-certs/etcdpeer1.crt <br>
+  --peer-client-cert-auth=true <br>
+  --peer-key-file=/etc/kubernetes/pki/etcd/peer.key <br>
+  --peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt <br>
+  --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt <br>
 #### kube-apiserver Certs
 --etcd-cafile=/var/lib/kubernetes/ca.pem
 --etcd-certfile=/var/lib/kubernetes/apiserver-etcd-client.crt
