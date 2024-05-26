@@ -791,54 +791,54 @@ sudo apt-mark hold kubelet kubeadm kubectl
   1- use curl for web server if app is accessible
   2- check service (Compare selectors)
   3- check pod
-  4- check pod logs
-     kubectl logs <pod_name>
-     kubectl logs <pod_name> -f --previous
+  4- check pod logs <br>
+     kubectl logs <pod_name> <br>
+     kubectl logs <pod_name> -f --previous <br>
   5- check dependent services, pods
 ### Controlplane Failure
 - Check node status
 - Check pods
 - Check manifests
 - Check controlplane pods
-- Check controlplane services
-  service kube-apiserver status
-  service kube-controller-manager status
-  service kube-scheduler status
-  service kube-proxy status
-  service kubelet status
-- Check pod logs
-  kubetl logs <controlplane_pod_name> -n kube-system
-  sudo journalctl -u kube-apiserver
+- Check controlplane services <br>
+  service kube-apiserver status <br>
+  service kube-controller-manager status <br>
+  service kube-scheduler status <br>
+  service kube-proxy status <br>
+  service kubelet status <br>
+- Check pod logs <br>
+  kubetl logs <controlplane_pod_name> -n kube-system <br>
+  sudo journalctl -u kube-apiserver <br>
 ### Worker Node Failure
-- Check node status
-  Commands;
-  top
-  df -h
-- Check kubelet;
-  service kubelet status
-  sudo journalctl -u kubelet
-  openssl x509 -in /var/lib/kubelet/worker-1.crt -text
+- Check node status <br>
+  Commands; <br>
+  top <br>
+  df -h <br>
+- Check kubelet; <br>
+  service kubelet status <br>
+  sudo journalctl -u kubelet <br>
+  openssl x509 -in /var/lib/kubelet/worker-1.crt -text <br>
 ### Networking Failure
-- Kubernetes resources for coreDNS are:   
-  1- A service account named coredns,
-  2- Cluster-roles named coredns and kube-dns
-  3- Clusterrolebindings named coredns and kube-dns, 
-  4- A deployment named coredns,
-  5- A configmap named coredns and a
-  6- Service named kube-dns.
+- Kubernetes resources for coreDNS are:   <br>
+  1- A service account named coredns, <br>
+  2- Cluster-roles named coredns and kube-dns <br>
+  3- Clusterrolebindings named coredns and kube-dns,  <br>
+  4- A deployment named coredns, <br>
+  5- A configmap named coredns and a <br>
+  6- Service named kube-dns. <br>
 - Port 53 is used for for DNS resolution.
 #### Troubleshooting issues related to coreDNS
 - If you find CoreDNS pods in pending state first check network plugin is installed.
-- Coredns pods have CrashLoopBackOff or Error state
-  If you have nodes that are running SELinux with an older version of Docker you might experience a scenario where the coredns pods are not starting. To solve that you can try one of the following options:
-  1- Upgrade to a newer version of Docker.
-  2- Disable SELinux.
-  3- Modify the coredns deployment to set allowPrivilegeEscalation to true:
-     kubectl -n kube-system get deployment coredns -o yaml | \
-     sed 's/allowPrivilegeEscalation: false/allowPrivilegeEscalation: true/g' | \
-     kubectl apply -f -
-  4- Another cause for CoreDNS to have CrashLoopBackOff is when a CoreDNS Pod deployed in Kubernetes detects a loop.
-      There are many ways to work around this issue, some are listed here:
+- Coredns pods have CrashLoopBackOff or Error state <br>
+  If you have nodes that are running SELinux with an older version of Docker you might experience a scenario where the coredns pods are not starting. To solve that you can try one of the following options: <br>
+  1- Upgrade to a newer version of Docker. <br>
+  2- Disable SELinux. <br>
+  3- Modify the coredns deployment to set allowPrivilegeEscalation to true: <br>
+     kubectl -n kube-system get deployment coredns -o yaml | \ <br>
+     sed 's/allowPrivilegeEscalation: false/allowPrivilegeEscalation: true/g' | \ <br>
+     kubectl apply -f - <br>
+  4- Another cause for CoreDNS to have CrashLoopBackOff is when a CoreDNS Pod deployed in Kubernetes detects a loop. <br>
+      There are many ways to work around this issue, some are listed here: <br>
       - Add the following to your kubelet config yaml: resolvConf: <path-to-your-real-resolv-conf-file> This flag tells kubelet to pass an alternate resolv.conf to Pods. For systems using systemd-resolved, /run/systemd/resolve/resolv.conf is typically the location of the "real" resolv.conf, although this can be different depending on your distribution.
       - Disable the local DNS cache on host nodes, and restore /etc/resolv.conf to the original.
       - A quick fix is to edit your Corefile, replacing forward . /etc/resolv.conf with the IP address of your upstream DNS, for example forward . 8.8.8.8. But this only fixes the issue for CoreDNS, kubelet will continue to forward the invalid resolv.conf to all default dnsPolicy Pods, leaving them unable to resolve DNS.
