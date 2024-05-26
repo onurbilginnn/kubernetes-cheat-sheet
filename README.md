@@ -861,15 +861,15 @@ sudo apt-mark hold kubelet kubeadm kubectl
 - $ sign means root curly paranthesis in json = {}
 - Get parent value = $.<parent_dictionary_name>
 - Get child value = $.<parent_dictionary_name>.<child_dictionary_name>...
-- Get list value = $[0] - First element
-                   $[2] - 3rd element
-                   $[0, 2] - 1st & 3rd element
-                   $[0:2] - 1st to 3rd element not included 3rd element, 1st element included
-                   $[-1:] - Gets the last element on the list
-                   $[-3:] - Gets the last 3 elements on the list
-                   $[?(@ > 40)] - Gets values greater than 40
-                   $[?(@ == 40)] - Gets values equals to 40
-                   $[?(@ != 40)] - Gets values not equals to 40
+- Get list value = $[0] - First element <br>
+                   $[2] - 3rd element <br>
+                   $[0, 2] - 1st & 3rd element <br>
+                   $[0:2] - 1st to 3rd element not included 3rd element, 1st element included <br>
+                   $[-1:] - Gets the last element on the list <br>
+                   $[-3:] - Gets the last 3 elements on the list <br>
+                   $[?(@ > 40)] - Gets values greater than 40 <br>
+                   $[?(@ == 40)] - Gets values equals to 40 <br>
+                   $[?(@ != 40)] - Gets values not equals to 40 <br>
 ### JSON Path Wild Cards
 - $.*.color (Get all keys color prop values)
 - $.[*].model (Get all items model prop values)
